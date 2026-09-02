@@ -32,9 +32,9 @@ def create_app(config_name: Optional[str] = None) -> Flask:
 
     return app
 
-
 def _register_extensions(app: Flask) -> None:
     db.init_app(app)
+    from . import models  # registra Conta/Categoria/Transacao/Alerta no metadata
     migrate.init_app(app, db)
     CORS(app)
 

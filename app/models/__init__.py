@@ -23,8 +23,8 @@ Exemplo de esqueleto para app/models/conta.py:
 
 Depois de criar cada model, descomente as linhas correspondentes abaixo:
 
-# from .conta import Conta
-# from .categoria import Categoria
-# from .transacao import Transacao
-# from .alerta import Alerta
 """
+from .conta import Conta
+from .categoria import Categoria
+from .transacao import Transacao
+from .alerta import Alerta
