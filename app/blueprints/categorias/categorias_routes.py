@@ -9,12 +9,45 @@ categorias_bp = Blueprint("categorias", __name__)
 
 @categorias_bp.route("", methods=["GET"])
 def listar_categorias():
+    """
+    Lista as categorias
+    ---
+    tags:
+      - Categorias
+    responses:
+      200:
+        description: Lista de categorias
+    """
     categorias = Categoria.query.order_by(Categoria.nome).all()
     return success_response(data=[c.to_dict() for c in categorias])
 
 
 @categorias_bp.route("", methods=["POST"])
 def criar_categoria():
+    """
+    Cria uma categoria
+    ---
+    tags:
+      - Categorias
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [nome]
+          properties:
+            nome:
+              type: string
+              example: "Educação"
+    responses:
+      201:
+        description: Categoria criada
+      400:
+        description: Campo 'nome' ausente
+      409:
+        description: Já existe uma categoria com esse nome
+    """
     body = request.get_json(silent=True) or {}
     nome = body.get("nome")
 

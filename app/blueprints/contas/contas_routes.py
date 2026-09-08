@@ -10,6 +10,22 @@ contas_bp = Blueprint("contas", __name__)
 
 @contas_bp.route("/<int:conta_id>/saldo", methods=["GET"])
 def saldo_da_conta(conta_id):
+    """
+    Devolve o saldo atual e o saldo projetado da conta
+    ---
+    tags:
+      - Contas
+    parameters:
+      - in: path
+        name: conta_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Saldo atual e projetado da conta
+      404:
+        description: Conta não encontrada
+    """
     conta = db.session.get(Conta, conta_id)
     if not conta:
         return error_response("Conta não encontrada", status_code=404)

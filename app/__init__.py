@@ -2,6 +2,17 @@ import os
 from typing import Optional
 
 from dotenv import load_dotenv
+
+# Precisa rodar ANTES do "from .config import config_by_name" logo abaixo —
+# config.py lê os.getenv("DATABASE_URL") no momento em que o módulo é
+# importado (não a cada chamada de create_app()). Se o .env ainda não foi
+# carregado nesse instante, a variável fica None pro resto do processo,
+# mesmo que load_dotenv() rode depois. Foi exatamente isso que quebrou o
+# "python run.py" (RuntimeError: SQLALCHEMY_DATABASE_URI must be set) — os
+# testes não pegavam porque TestingConfig tem um fallback de SQLite que não
+# depende do .env.
+load_dotenv()
+
 from flasgger import Swagger
 from flask import Flask
 from flask_cors import CORS
@@ -20,8 +31,6 @@ def create_app(config_name: Optional[str] = None) -> Flask:
                  Se não for passado, usa a variável de ambiente FLASK_ENV
                  (e cai em 'development' se ela também não existir).
     """
-    load_dotenv()
-
     config_name = config_name or os.getenv("FLASK_ENV", "development")
 
     app = Flask(__name__)
