@@ -64,6 +64,7 @@ def _register_blueprints(app: Flask) -> None:
     from .blueprints.alertas.routes import alertas_bp
     from .blueprints.categorias.routes import categorias_bp
     from .blueprints.contas.routes import contas_bp
+    from .blueprints.dashboard.routes import dashboard_bp
     from .blueprints.health.routes import health_bp
     from .blueprints.transacoes.routes import transacoes_bp
     from .blueprints.web.routes import web_bp
@@ -74,3 +75,4 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(categorias_bp, url_prefix="/categorias")
     app.register_blueprint(contas_bp, url_prefix="/contas")
     app.register_blueprint(alertas_bp, url_prefix="/alertas")
+    app.register_blueprint(dashboard_bp, url_prefix="/dashboard")

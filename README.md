@@ -98,7 +98,7 @@ PostgreSQL hospedado no Render. Migrations gerenciadas via Flask-Migrate
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/transacoes` | Lista transações |
+| GET | `/transacoes` | Lista transações. Filtros opcionais: `conta_id`, `tipo`, `categoria_id`, `data_inicio`, `data_fim`. Paginação opcional: `pagina`, `por_pagina` (padrão 20, máx. 100) |
 | GET | `/transacoes/:id` | Detalha uma transação |
 | POST | `/transacoes` | Cria transação (dispara IA + recálculo de saldo + checagem de risco) |
 | PUT | `/transacoes/:id` | Atualiza transação |
@@ -106,6 +106,7 @@ PostgreSQL hospedado no Render. Migrations gerenciadas via Flask-Migrate
 | GET | `/categorias` | Lista categorias |
 | GET | `/contas/:id/saldo` | Saldo atual e projetado da conta |
 | GET | `/alertas` | Lista alertas gerados pelo agente |
+| GET | `/dashboard/resumo?conta_id=1` | Dados do painel: saldos, totais do mês, saídas por categoria, evolução do saldo e data em que o caixa fica negativo |
 | GET | `/health` | Health-check da aplicação e do banco |
 
 ## Documentação da API
