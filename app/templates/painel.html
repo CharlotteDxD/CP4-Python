@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Painel{% endblock %}
+
+{% block content %}
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Painel</h1>
+      <p class="page-sub" id="conta-nome">Carregando conta…</p>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('web.transacoes') }}?nova=1">Registrar transação</a>
+  </header>
+
+  <section class="block forecast" aria-labelledby="headline">
+    <h2 class="headline" id="headline"><span class="skeleton" style="display:block;width:70%"></span></h2>
+    <p class="headline-sub" id="headline-sub">Projeção feita com as transações já lançadas, incluindo as agendadas.</p>
+    <div class="chart-box">
+      <canvas id="chart-saldo" role="img" aria-label="Evolução do saldo realizado e projetado"></canvas>
+    </div>
+    <ul class="legend">
+      <li><span class="sw"></span>Saldo realizado</li>
+      <li><span class="sw sw-dash"></span>Saldo projetado</li>
+      <li><span class="sw sw-today"></span>Hoje</li>
+      <li><span class="sw sw-neg"></span>Caixa negativo</li>
+    </ul>
+  </section>
+
+  <section class="figures" aria-label="Números do mês">
+    <div class="figure"><p class="figure-label">Entradas no mês</p><p class="figure-value" id="f-entradas">–</p></div>
+    <div class="figure"><p class="figure-label">Saídas no mês</p><p class="figure-value" id="f-saidas">–</p></div>
+    <div class="figure"><p class="figure-label">Saldo projetado</p><p class="figure-value" id="f-projetado">–</p></div>
+    <div class="figure"><p class="figure-label">Alertas do agente</p><p class="figure-value" id="f-alertas">–</p></div>
+  </section>
+
+  <div class="grid-2">
+    <section class="block block-pad" aria-labelledby="t-cat">
+      <h2 class="block-title" id="t-cat">Para onde o dinheiro foi este mês</h2>
+      <ul class="bars" id="bars"></ul>
+    </section>
+
+    <section class="block block-pad" aria-labelledby="t-rec">
+      <div class="block-head">
+        <h2 class="block-title" id="t-rec">Recomendação mais recente</h2>
+        <a href="{{ url_for('web.alertas') }}">Ver alertas</a>
+      </div>
+      <div class="advice" id="advice"></div>
+    </section>
+  </div>
+
+  <section class="block" aria-labelledby="t-ult">
+    <div class="block-head block-pad" style="margin:0;padding-bottom:6px">
+      <h2 class="block-title" id="t-ult">Últimas transações</h2>
+      <a href="{{ url_for('web.transacoes') }}">Ver todas</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data</th><th>Descrição</th><th class="col-hide-sm">Categoria</th><th class="num">Valor</th></tr></thead>
+        <tbody id="ultimas"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/painel.js') }}"></script>
+{% endblock %}

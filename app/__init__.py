@@ -66,7 +66,9 @@ def _register_blueprints(app: Flask) -> None:
     from .blueprints.contas.routes import contas_bp
     from .blueprints.health.routes import health_bp
     from .blueprints.transacoes.routes import transacoes_bp
+    from .blueprints.web.routes import web_bp
 
+    app.register_blueprint(web_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(transacoes_bp, url_prefix="/transacoes")
     app.register_blueprint(categorias_bp, url_prefix="/categorias")
