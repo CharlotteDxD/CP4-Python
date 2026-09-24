@@ -93,10 +93,46 @@ def _avaliar_risco(conta_id):
     return alerta, aviso_ia
 
 
+POR_PAGINA_PADRAO = 20
+POR_PAGINA_MAXIMO = 100
+
+
+def _data_do_filtro(nome):
+    """Lê data_inicio/data_fim da query string. Data sem hora em data_fim vale o dia inteiro."""
+    valor = request.args.get(nome)
+    if not valor:
+        return None, None
+    try:
+        data = datetime.fromisoformat(valor)
+    except ValueError:
+        return None, error_response(
+            f"Parâmetro '{nome}' deve estar em formato ISO 8601 (ex.: 2026-09-30)",
+            status_code=400,
+        )
+    if nome == "data_fim" and len(valor) == 10:
+        data = data.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return data, None
+
+
+def _inteiro_positivo(nome, padrao=None):
+    valor = request.args.get(nome)
+    if valor is None:
+        return padrao, None
+    try:
+        numero = int(valor)
+    except ValueError:
+        numero = 0
+    if numero < 1:
+        return None, error_response(
+            f"Parâmetro '{nome}' deve ser um número inteiro maior que zero", status_code=400
+        )
+    return numero, None
+
+
 @transacoes_bp.route("", methods=["GET"])
 def listar_transacoes():
     """
-    Lista todas as transações
+    Lista transações, com filtros opcionais e paginação opcional
     ---
     tags:
       - Transações
@@ -105,17 +141,100 @@ def listar_transacoes():
         name: conta_id
         type: integer
         required: false
-        description: Filtra transações por conta
+        description: Filtra por conta
+      - in: query
+        name: tipo
+        type: string
+        enum: [entrada, saida]
+        required: false
+      - in: query
+        name: categoria_id
+        type: integer
+        required: false
+      - in: query
+        name: data_inicio
+        type: string
+        required: false
+        description: ISO 8601 (ex. 2026-09-01). Inclui a data informada.
+      - in: query
+        name: data_fim
+        type: string
+        required: false
+        description: ISO 8601 (ex. 2026-09-30). Data sem hora inclui o dia inteiro.
+      - in: query
+        name: pagina
+        type: integer
+        required: false
+        description: >
+          Liga a paginação. Sem pagina e sem por_pagina, a resposta continua
+          sendo a lista completa (formato do CP1).
+      - in: query
+        name: por_pagina
+        type: integer
+        required: false
+        description: Itens por página (padrão 20, máximo 100)
     responses:
       200:
-        description: Lista de transações
+        description: >
+          Sem paginação, dados é a lista de transações. Com paginação, dados é
+          {itens, pagina, por_pagina, total, total_paginas}.
+      400:
+        description: Parâmetro de filtro ou de paginação inválido
     """
     query = Transacao.query
+
     conta_id = request.args.get("conta_id", type=int)
     if conta_id is not None:
         query = query.filter_by(conta_id=conta_id)
-    transacoes = query.order_by(Transacao.data.desc()).all()
-    return success_response(data=[t.to_dict() for t in transacoes])
+
+    tipo = request.args.get("tipo")
+    if tipo is not None:
+        if tipo not in ("entrada", "saida"):
+            return error_response("Parâmetro 'tipo' deve ser 'entrada' ou 'saida'", status_code=400)
+        query = query.filter_by(tipo=tipo)
+
+    if request.args.get("categoria_id") is not None:
+        categoria_id = request.args.get("categoria_id", type=int)
+        if categoria_id is None:
+            return error_response("Parâmetro 'categoria_id' deve ser um número inteiro", status_code=400)
+        query = query.filter_by(categoria_id=categoria_id)
+
+    data_inicio, erro = _data_do_filtro("data_inicio")
+    if erro:
+        return erro
+    data_fim, erro = _data_do_filtro("data_fim")
+    if erro:
+        return erro
+    if data_inicio and data_fim and data_inicio > data_fim:
+        return error_response("'data_inicio' não pode ser depois de 'data_fim'", status_code=400)
+    if data_inicio:
+        query = query.filter(Transacao.data >= data_inicio)
+    if data_fim:
+        query = query.filter(Transacao.data <= data_fim)
+
+    query = query.order_by(Transacao.data.desc(), Transacao.id.desc())
+
+    paginar = "pagina" in request.args or "por_pagina" in request.args
+    if not paginar:
+        return success_response(data=[t.to_dict() for t in query.all()])
+
+    pagina, erro = _inteiro_positivo("pagina", padrao=1)
+    if erro:
+        return erro
+    por_pagina, erro = _inteiro_positivo("por_pagina", padrao=POR_PAGINA_PADRAO)
+    if erro:
+        return erro
+    por_pagina = min(por_pagina, POR_PAGINA_MAXIMO)
+
+    total = query.order_by(None).count()
+    itens = query.offset((pagina - 1) * por_pagina).limit(por_pagina).all()
+    return success_response(data={
+        "itens": [t.to_dict() for t in itens],
+        "pagina": pagina,
+        "por_pagina": por_pagina,
+        "total": total,
+        "total_paginas": (total + por_pagina - 1) // por_pagina,
+    })
 
 
 @transacoes_bp.route("/<int:transacao_id>", methods=["GET"])

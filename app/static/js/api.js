@@ -3,7 +3,7 @@
 // Para ligar no backend real, troque para false: as páginas não mudam.
 const USE_MOCK = true;
 
-// Contrato proposto para o endpoint agregado do painel (ainda não existe no backend):
+// Formato do endpoint agregado do painel (implementado em app/blueprints/dashboard):
 // GET /dashboard/resumo?conta_id=1 -> {
 //   conta: {id, nome, saldo_atual, saldo_projetado},
 //   totais_mes: {entradas, saidas},

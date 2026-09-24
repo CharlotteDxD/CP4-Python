@@ -61,6 +61,81 @@ def test_listar_transacoes_filtra_por_conta_id():
     assert float(body[0]["valor"]) == 10.0
 
 
+def _cria_cenario_de_filtros(app):
+    conta_id = _cria_conta(app)
+    categoria_id = _cria_categoria(app, nome="Aluguel")
+    client = app.test_client()
+    for valor, tipo, data, categoria in [
+        (100, "entrada", "2026-09-01T10:00:00", None),
+        (200, "saida", "2026-09-15T10:00:00", categoria_id),
+        (300, "saida", "2026-09-30T18:00:00", None),
+        (400, "entrada", "2026-10-05T10:00:00", None),
+    ]:
+        body = {"valor": valor, "tipo": tipo, "conta_id": conta_id, "data": data}
+        if categoria:
+            body["categoria_id"] = categoria
+        with patch("app.blueprints.transacoes.transacoes_routes.gerar_recomendacao", return_value="ok"):
+            client.post("/transacoes", json=body)
+    return client, categoria_id
+
+
+def test_listar_transacoes_filtra_por_tipo():
+    app = _app_com_banco_limpo()
+    client, _ = _cria_cenario_de_filtros(app)
+
+    dados = client.get("/transacoes?tipo=saida").get_json()["dados"]
+
+    assert [t["valor"] for t in dados] == [300.0, 200.0]
+
+
+def test_listar_transacoes_filtra_por_categoria():
+    app = _app_com_banco_limpo()
+    client, categoria_id = _cria_cenario_de_filtros(app)
+
+    dados = client.get(f"/transacoes?categoria_id={categoria_id}").get_json()["dados"]
+
+    assert [t["valor"] for t in dados] == [200.0]
+
+
+def test_listar_transacoes_filtra_por_intervalo_de_data_incluindo_o_dia_final():
+    app = _app_com_banco_limpo()
+    client, _ = _cria_cenario_de_filtros(app)
+
+    dados = client.get("/transacoes?data_inicio=2026-09-15&data_fim=2026-09-30").get_json()["dados"]
+
+    assert [t["valor"] for t in dados] == [300.0, 200.0]
+
+
+def test_listar_transacoes_paginada_devolve_metadados():
+    app = _app_com_banco_limpo()
+    client, _ = _cria_cenario_de_filtros(app)
+
+    dados = client.get("/transacoes?pagina=2&por_pagina=3").get_json()["dados"]
+
+    assert dados["pagina"] == 2
+    assert dados["por_pagina"] == 3
+    assert dados["total"] == 4
+    assert dados["total_paginas"] == 2
+    assert [t["valor"] for t in dados["itens"]] == [100.0]
+
+
+def test_listar_transacoes_com_filtros_invalidos_retorna_400():
+    app = _app_com_banco_limpo()
+    client = app.test_client()
+
+    for query in [
+        "tipo=transferencia",
+        "categoria_id=abc",
+        "data_inicio=30/09/2026",
+        "data_inicio=2026-10-01&data_fim=2026-09-01",
+        "pagina=0",
+        "por_pagina=x",
+    ]:
+        response = client.get(f"/transacoes?{query}")
+        assert response.status_code == 400, query
+        assert response.get_json()["sucesso"] is False
+
+
 def test_detalhar_transacao_inexistente_retorna_404():
     app = _app_com_banco_limpo()
     client = app.test_client()
