@@ -7,7 +7,7 @@ class Alerta(db.Model):
         db.CheckConstraint(
             "nivel_risco IN ('baixo', 'medio', 'alto')", name="ck_alerta_nivel_risco_valido"
         ),
-        db.Index("idx_alerta_conta_id", "conta_id"),
+        db.Index("idx_alerta_conta_data", "conta_id", "data"),
     )
 
     id = db.Column(db.Integer, primary_key=True)

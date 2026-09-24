@@ -6,8 +6,13 @@ class Transacao(db.Model):
     __table_args__ = (
         db.CheckConstraint("valor > 0", name="ck_transacao_valor_positivo"),
         db.CheckConstraint("tipo IN ('entrada', 'saida')", name="ck_transacao_tipo_valido"),
-        db.Index("idx_transacao_conta_id", "conta_id"),
+        # (conta_id, data) atende o filtro por conta + ordenação por data do
+        # dashboard e substitui o idx_transacao_conta_id (era prefixo dele).
+        db.Index("idx_transacao_conta_data", "conta_id", "data"),
         db.Index("idx_transacao_data", "data"),
+        # Postgres não indexa FK sozinho: sem isso, agrupar por categoria e o
+        # ON DELETE SET NULL varrem a tabela toda.
+        db.Index("idx_transacao_categoria_id", "categoria_id"),
     )
 
     id = db.Column(db.Integer, primary_key=True)
