@@ -87,7 +87,7 @@ A API sobe em `http://127.0.0.1:5000`.
 ```bash
 pytest
 ```
-34 testes automatizados cobrindo saldo, transações, categorias, contas e o
+35 testes automatizados cobrindo saldo, transações, categorias, contas e o
 fluxo do agente de ponta a ponta.
 
 ## Banco de dados

@@ -1,8 +1,6 @@
 from flask import Blueprint
 
-from app.extensions import db
-from app.models import Conta
-from app.services.saldo import calcular_saldo_projetado
+from app.services.saldo import calcular_saldo_projetado, recalcular_saldo
 from app.utils.responses import error_response, success_response
 
 contas_bp = Blueprint("contas", __name__)
@@ -26,7 +24,9 @@ def saldo_da_conta(conta_id):
       404:
         description: Conta não encontrada
     """
-    conta = db.session.get(Conta, conta_id)
+    # recalcula na leitura: transação com data futura que já venceu
+    # não muda o saldo_atual guardado até a próxima escrita na conta
+    conta = recalcular_saldo(conta_id)
     if not conta:
         return error_response("Conta não encontrada", status_code=404)
 
