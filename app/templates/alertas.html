@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Alertas{% endblock %}
+
+{% block content %}
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Alertas</h1>
+      <p class="page-sub">Criados pelo agente sempre que a projeção do saldo fica negativa, com uma recomendação do que fazer.</p>
+    </div>
+    <div class="field">
+      <label for="f-nivel">Nível de risco</label>
+      <select class="input" id="f-nivel">
+        <option value="">Todos</option>
+        <option value="alto">Alto</option>
+        <option value="medio">Médio</option>
+        <option value="baixo">Baixo</option>
+      </select>
+    </div>
+  </header>
+
+  <ul class="alert-list" id="lista"></ul>
+  <div class="block empty" id="vazio" hidden></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/alertas.js') }}"></script>
+{% endblock %}

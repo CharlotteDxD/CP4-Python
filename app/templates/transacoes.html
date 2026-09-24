@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Transações{% endblock %}
+
+{% block content %}
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Transações</h1>
+      <p class="page-sub">Entradas e saídas da conta, incluindo as agendadas para os próximos dias.</p>
+    </div>
+    <button type="button" class="btn btn-primary" id="btn-nova">Registrar transação</button>
+  </header>
+
+  <section class="block">
+    <div class="filters" role="search">
+      <div class="field grow">
+        <label for="f-busca">Buscar</label>
+        <input class="input" id="f-busca" type="search" placeholder="Descrição da transação">
+      </div>
+      <div class="field">
+        <label for="f-tipo">Tipo</label>
+        <select class="input" id="f-tipo">
+          <option value="">Todos</option>
+          <option value="entrada">Entradas</option>
+          <option value="saida">Saídas</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-categoria">Categoria</label>
+        <select class="input" id="f-categoria"><option value="">Todas</option></select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Data</th><th>Descrição</th><th class="col-hide-sm">Categoria</th><th class="num">Valor</th><th><span class="vh">Ações</span></th></tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="vazio" hidden></div>
+  </section>
+</div>
+
+<dialog id="dlg-transacao" aria-labelledby="dlg-titulo">
+  <form class="dialog-form" id="form-transacao" novalidate>
+    <h2 class="dialog-title" id="dlg-titulo">Registrar transação</h2>
+    <p class="form-error" id="form-erro" hidden></p>
+
+    <div class="field" data-campo="descricao">
+      <label for="c-descricao">Descrição</label>
+      <input class="input" id="c-descricao" name="descricao" autocomplete="off" placeholder="Ex.: Conta de energia elétrica">
+    </div>
+
+    <div class="row-2">
+      <div class="field" data-campo="valor">
+        <label for="c-valor">Valor (R$)</label>
+        <input class="input" id="c-valor" name="valor" type="number" inputmode="decimal" step="0.01" min="0.01">
+        <p class="field-error" hidden></p>
+      </div>
+      <div class="field" data-campo="data">
+        <label for="c-data">Data</label>
+        <input class="input" id="c-data" name="data" type="date">
+        <p class="field-hint">Datas futuras entram só na projeção.</p>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="label" id="tipo-label">Tipo</span>
+      <div class="segmented" role="radiogroup" aria-labelledby="tipo-label">
+        <input type="radio" name="tipo" id="c-tipo-saida" value="saida" checked><label for="c-tipo-saida">Saída</label>
+        <input type="radio" name="tipo" id="c-tipo-entrada" value="entrada"><label for="c-tipo-entrada">Entrada</label>
+      </div>
+    </div>
+
+    <div class="field" data-campo="categoria_id">
+      <label for="c-categoria">Categoria</label>
+      <select class="input" id="c-categoria" name="categoria_id">
+        <option value="">Deixar o agente escolher</option>
+      </select>
+      <p class="field-hint" id="hint-ia">Sem categoria, o agente escolhe uma a partir da descrição.</p>
+    </div>
+
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-fechar>Cancelar</button>
+      <button type="submit" class="btn btn-primary" id="btn-salvar">Registrar transação</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-excluir" aria-labelledby="dlg-excluir-titulo">
+  <form class="dialog-form" method="dialog">
+    <h2 class="dialog-title" id="dlg-excluir-titulo">Excluir transação?</h2>
+    <p id="excluir-texto" class="muted"></p>
+    <div class="dialog-actions">
+      <button type="submit" class="btn" value="cancelar">Cancelar</button>
+      <button type="submit" class="btn btn-danger" value="excluir">Excluir transação</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/transacoes.js') }}"></script>
+{% endblock %}

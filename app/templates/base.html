@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{% endblock %} | Agente Financeiro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="{{ url_for('web.painel') }}">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="8" />
+        <path class="mark-zero" d="M6 19h20" />
+        <path class="mark-line" d="M6 11l6 3 5-2 4 5 5 5" />
+      </svg>
+      <span>
+        <span class="brand-name">Agente Financeiro</span>
+        <span class="brand-sub">Fluxo de caixa</span>
+      </span>
+    </a>
+
+    {% set paginas = [
+      ('web.painel', 'Painel'),
+      ('web.transacoes', 'Transações'),
+      ('web.alertas', 'Alertas'),
+      ('web.categorias', 'Categorias'),
+    ] %}
+    <nav class="nav" aria-label="Principal">
+      {% for endpoint, rotulo in paginas %}
+      <a href="{{ url_for(endpoint) }}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}>
+        {{ rotulo }}
+        {% if endpoint == 'web.alertas' %}<span class="badge" id="nav-alertas" hidden></span>{% endif %}
+      </a>
+      {% endfor %}
+    </nav>
+
+    <div class="side-foot">
+      <p class="proto" id="modo-dados">Protótipo com dados de exemplo</p>
+      <a href="/apidocs">Documentação da API</a>
+    </div>
+  </aside>
+
+  <main class="main" id="conteudo" tabindex="-1">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
