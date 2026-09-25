@@ -154,6 +154,7 @@ th:last-child, td:last-child { padding-right: 24px; }
 .num { text-align: right; white-space: nowrap; }
 .val-pos { color: var(--pos); }
 .val-neg { color: var(--ink); }
+.val-alert { color: var(--neg); }
 .muted { color: var(--mute); }
 .desc { max-width: 38ch; }
 .row-actions { display: flex; justify-content: flex-end; gap: 4px; }

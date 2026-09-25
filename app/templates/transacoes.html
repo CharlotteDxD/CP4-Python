@@ -29,6 +29,10 @@
         <label for="f-categoria">Categoria</label>
         <select class="input" id="f-categoria"><option value="">Todas</option></select>
       </div>
+      <div class="field" id="campo-f-conta" hidden>
+        <label for="f-conta">Conta</label>
+        <select class="input" id="f-conta"><option value="">Todas</option></select>
+      </div>
       <div class="field">
         <label for="f-de">De</label>
         <input class="input" id="f-de" type="date">
@@ -65,6 +69,11 @@
   <form class="dialog-form" id="form-transacao" novalidate>
     <h2 class="dialog-title" id="dlg-titulo">Registrar transação</h2>
     <p class="form-error" id="form-erro" hidden></p>
+
+    <div class="field" id="campo-conta" hidden>
+      <label for="c-conta">Conta</label>
+      <select class="input" id="c-conta" name="conta_id"></select>
+    </div>
 
     <div class="field" data-campo="descricao">
       <label for="c-descricao">Descrição</label>

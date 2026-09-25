@@ -8,7 +8,7 @@ def client():
     return create_app("testing").test_client()
 
 
-@pytest.mark.parametrize("path", ["/app", "/app/transacoes", "/app/alertas", "/app/categorias"])
+@pytest.mark.parametrize("path", ["/app", "/app/transacoes", "/app/alertas", "/app/categorias", "/app/contas"])
 def test_paginas_do_frontend_respondem_200(client, path):
     response = client.get(path)
 

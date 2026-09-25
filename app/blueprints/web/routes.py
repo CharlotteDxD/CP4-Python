@@ -26,3 +26,8 @@ def alertas():
 @web_bp.route("/app/categorias")
 def categorias():
     return render_template("categorias.html")
+
+
+@web_bp.route("/app/contas")
+def contas():
+    return render_template("contas.html")

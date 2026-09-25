@@ -13,6 +13,7 @@
   let pagina = 1;
   let ultimaReq = 0;
   let debounce;
+  let temVariasContas = false;
 
   const nomeCat = id => categorias.find(c => c.id === id)?.nome;
 
@@ -20,6 +21,7 @@
     busca: $("f-busca").value.trim(),
     tipo: $("f-tipo").value,
     cat: $("f-categoria").value,
+    conta: $("f-conta").value,
     de: $("f-de").value,
     ate: $("f-ate").value,
   });
@@ -30,6 +32,7 @@
     if (f.tipo) q.set("tipo", f.tipo);
     if (f.cat === "sem") q.set("sem_categoria", "true");
     else if (f.cat) q.set("categoria_id", f.cat);
+    if (f.conta) q.set("conta_id", f.conta);
     if (f.de) q.set("data_inicio", f.de);
     if (f.ate) q.set("data_fim", f.ate);
     q.set("pagina", pagina);
@@ -44,6 +47,17 @@
     const opcoes = categorias.map(c => `<option value="${c.id}">${UI.esc(c.nome)}</option>`).join("");
     $("f-categoria").innerHTML = `<option value="">Todas</option><option value="sem">Sem categoria</option>${opcoes}`;
     $("c-categoria").innerHTML = `<option value="">Deixar o agente escolher</option>${opcoes}`;
+  }
+
+  // com uma conta só, o seletor nem aparece
+  async function carregarContas() {
+    const r = await API.get("/contas");
+    const contas = r.sucesso ? r.dados : [];
+    const opcoes = contas.map(c => `<option value="${c.id}">${UI.esc(c.nome)}</option>`).join("");
+    $("f-conta").innerHTML = `<option value="">Todas</option>${opcoes}`;
+    $("c-conta").innerHTML = opcoes;
+    $("campo-f-conta").hidden = contas.length < 2;
+    temVariasContas = contas.length > 1;
   }
 
   async function carregarLista() {
@@ -135,6 +149,7 @@
     $("dlg-titulo").textContent = t ? "Editar transação" : "Registrar transação";
     $("btn-salvar").textContent = t ? "Salvar alterações" : "Registrar transação";
     $("hint-ia").hidden = !!t;
+    $("campo-conta").hidden = !!t || !temVariasContas;
     $("c-data").value = (t ? t.data : API.hoje().toISOString()).slice(0, 10);
     if (t) {
       $("c-descricao").value = t.descricao ?? "";
@@ -180,7 +195,7 @@
     const categoria = $("c-categoria").value;
     if (editando) body.categoria_id = categoria ? Number(categoria) : null;
     else {
-      body.conta_id = 1;
+      body.conta_id = Number($("c-conta").value) || 1;
       if (categoria) body.categoria_id = Number(categoria);
     }
 
@@ -235,17 +250,17 @@
     clearTimeout(debounce);
     debounce = setTimeout(filtroMudou, 300);
   });
-  ["f-tipo", "f-categoria", "f-de", "f-ate"].forEach(id => $(id).addEventListener("change", filtroMudou));
+  ["f-tipo", "f-categoria", "f-conta", "f-de", "f-ate"].forEach(id => $(id).addEventListener("change", filtroMudou));
 
   $("f-limpar").addEventListener("click", () => {
-    ["f-busca", "f-tipo", "f-categoria", "f-de", "f-ate"].forEach(id => { $(id).value = ""; });
+    ["f-busca", "f-tipo", "f-categoria", "f-conta", "f-de", "f-ate"].forEach(id => { $(id).value = ""; });
     filtroMudou();
   });
 
   $("pg-ant").addEventListener("click", () => { pagina -= 1; carregarLista(); });
   $("pg-prox").addEventListener("click", () => { pagina += 1; carregarLista(); });
 
-  carregarCategorias().then(carregarLista).then(() => {
+  Promise.all([carregarCategorias(), carregarContas()]).then(carregarLista).then(() => {
     if (new URLSearchParams(location.search).has("nova")) abrir();
   });
 })();

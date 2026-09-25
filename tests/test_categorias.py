@@ -71,3 +71,42 @@ def test_listar_categorias_retorna_ordenado_por_nome():
 
     nomes = [c["nome"] for c in response.get_json()["dados"]]
     assert nomes == ["Despesas Fixas", "Vendas"]
+
+
+def _cria_categoria(client, nome):
+    return client.post("/categorias", json={"nome": nome}).get_json()["dados"]["id"]
+
+
+def test_renomear_categoria():
+    client = _app_com_banco_limpo().test_client()
+    categoria_id = _cria_categoria(client, "Vendas")
+
+    response = client.put(f"/categorias/{categoria_id}", json={"nome": "  Receitas  "})
+
+    assert response.status_code == 200
+    assert response.get_json()["dados"]["nome"] == "Receitas"
+    assert [c["nome"] for c in client.get("/categorias").get_json()["dados"]] == ["Receitas"]
+
+
+def test_renomear_categoria_para_o_mesmo_nome_nao_e_conflito():
+    client = _app_com_banco_limpo().test_client()
+    categoria_id = _cria_categoria(client, "Vendas")
+
+    assert client.put(f"/categorias/{categoria_id}", json={"nome": "Vendas"}).status_code == 200
+
+
+def test_renomear_categoria_para_nome_de_outra_retorna_409():
+    client = _app_com_banco_limpo().test_client()
+    _cria_categoria(client, "Vendas")
+    outra = _cria_categoria(client, "Aluguel")
+
+    assert client.put(f"/categorias/{outra}", json={"nome": "Vendas"}).status_code == 409
+
+
+def test_renomear_categoria_invalida():
+    client = _app_com_banco_limpo().test_client()
+    categoria_id = _cria_categoria(client, "Vendas")
+
+    assert client.put(f"/categorias/{categoria_id}", json={"nome": "  "}).status_code == 400
+    assert client.put(f"/categorias/{categoria_id}", json={"nome": "x" * 81}).status_code == 400
+    assert client.put("/categorias/999", json={"nome": "Vendas"}).status_code == 404

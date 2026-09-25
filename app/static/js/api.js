@@ -268,6 +268,16 @@ const Mock = (() => {
       return ok(nova, 201);
     }
 
+    if (method === "PUT" && p.startsWith("/categorias/")) {
+      const alvo = categorias.find(c => c.id === id);
+      if (!alvo) return erro("Categoria não encontrada", 404);
+      const nome = String(body.nome ?? "").trim();
+      if (!nome) return erro("Campo 'nome' é obrigatório");
+      if (categorias.some(c => c.id !== id && c.nome.toLowerCase() === nome.toLowerCase())) return erro("Já existe uma categoria com esse nome", 409);
+      alvo.nome = nome;
+      return ok(alvo);
+    }
+
     if (method === "GET" && p === "/transacoes") return listar(url.searchParams);
     if (method === "POST" && p === "/transacoes") return salvarTransacao(body);
     if (p.startsWith("/transacoes/")) {
@@ -282,6 +292,16 @@ const Mock = (() => {
       }
     }
 
+    if (method === "GET" && p === "/contas") {
+      return ok([{ ...conta, saldo_atual: saldoAtual(), saldo_projetado: saldoProjetado() }]);
+    }
+    if (method === "POST" && p === "/contas") return erro("Criar contas só funciona com a API real (USE_MOCK = false).");
+    if (method === "PUT" && p === `/contas/${conta.id}`) {
+      const nome = String(body.nome ?? "").trim();
+      if (!nome) return erro("Campo 'nome' é obrigatório");
+      conta.nome = nome;
+      return ok({ ...conta, saldo_atual: saldoAtual(), saldo_projetado: saldoProjetado() });
+    }
     if (method === "GET" && p === `/contas/${conta.id}/saldo`) {
       return ok({ conta_id: conta.id, nome: conta.nome, saldo_atual: saldoAtual(), saldo_projetado: saldoProjetado() });
     }

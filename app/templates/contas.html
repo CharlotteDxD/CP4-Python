@@ -1,27 +1,29 @@
 {% extends "base.html" %}
-{% block title %}Categorias{% endblock %}
+{% block title %}Contas{% endblock %}
 
 {% block content %}
 <div class="page">
   <header class="page-head">
     <div>
-      <h1 class="page-title">Categorias</h1>
-      <p class="page-sub">O agente usa esta lista para categorizar as transações registradas sem categoria.</p>
+      <h1 class="page-title">Contas</h1>
+      <p class="page-sub">Cada conta tem o próprio saldo, calculado a partir das transações registradas nela.</p>
     </div>
   </header>
 
   <section class="block">
-    <form class="cat-form" id="form-cat" novalidate>
+    <form class="cat-form" id="form-conta" novalidate>
       <div class="field" id="campo-nome">
-        <label for="c-nome">Nova categoria</label>
-        <input class="input" id="c-nome" name="nome" autocomplete="off" placeholder="Ex.: Manutenção">
+        <label for="c-nome">Nova conta</label>
+        <input class="input" id="c-nome" name="nome" autocomplete="off" placeholder="Ex.: Caixa da loja">
         <p class="field-error" hidden></p>
       </div>
-      <button type="submit" class="btn btn-primary" id="btn-criar">Criar categoria</button>
+      <button type="submit" class="btn btn-primary" id="btn-criar">Criar conta</button>
     </form>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Categoria</th><th class="num">Transações</th><th class="num">Total movimentado</th><th><span class="vh">Ações</span></th></tr></thead>
+        <thead>
+          <tr><th>Conta</th><th class="num">Saldo atual</th><th class="num">Saldo projetado</th><th><span class="vh">Ações</span></th></tr>
+        </thead>
         <tbody id="lista"></tbody>
       </table>
     </div>
@@ -30,7 +32,7 @@
 
 <dialog id="dlg-renomear" aria-labelledby="dlg-renomear-titulo">
   <form class="dialog-form" id="form-renomear" novalidate>
-    <h2 class="dialog-title" id="dlg-renomear-titulo">Renomear categoria</h2>
+    <h2 class="dialog-title" id="dlg-renomear-titulo">Renomear conta</h2>
     <p class="form-error" id="ren-erro" hidden></p>
     <div class="field">
       <label for="r-nome">Nome</label>
@@ -45,5 +47,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/categorias.js') }}"></script>
+<script src="{{ url_for('static', filename='js/contas.js') }}"></script>
 {% endblock %}
