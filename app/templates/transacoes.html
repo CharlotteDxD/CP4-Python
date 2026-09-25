@@ -29,6 +29,17 @@
         <label for="f-categoria">Categoria</label>
         <select class="input" id="f-categoria"><option value="">Todas</option></select>
       </div>
+      <div class="field">
+        <label for="f-de">De</label>
+        <input class="input" id="f-de" type="date">
+      </div>
+      <div class="field">
+        <label for="f-ate">Até</label>
+        <input class="input" id="f-ate" type="date">
+      </div>
+      <div class="field field-action">
+        <button type="button" class="btn btn-ghost" id="f-limpar" hidden>Limpar filtros</button>
+      </div>
     </div>
     <div class="table-wrap">
       <table>
@@ -39,6 +50,14 @@
       </table>
     </div>
     <div class="empty" id="vazio" hidden></div>
+    <nav class="pager" id="pager" aria-label="Paginação" hidden>
+      <p id="pager-info"></p>
+      <div class="pager-btns" id="pager-btns">
+        <button type="button" class="btn" id="pg-ant">Anterior</button>
+        <span id="pg-atual"></span>
+        <button type="button" class="btn" id="pg-prox">Próxima</button>
+      </div>
+    </nav>
   </section>
 </div>
 

@@ -152,6 +152,16 @@ def listar_transacoes():
         type: integer
         required: false
       - in: query
+        name: sem_categoria
+        type: boolean
+        required: false
+        description: Com true, só transações sem categoria (ignorado se categoria_id vier junto)
+      - in: query
+        name: busca
+        type: string
+        required: false
+        description: Texto contido na descrição, sem diferenciar maiúsculas de minúsculas
+      - in: query
         name: data_inicio
         type: string
         required: false
@@ -198,6 +208,14 @@ def listar_transacoes():
         if categoria_id is None:
             return error_response("Parâmetro 'categoria_id' deve ser um número inteiro", status_code=400)
         query = query.filter_by(categoria_id=categoria_id)
+    elif request.args.get("sem_categoria", "").lower() == "true":
+        query = query.filter(Transacao.categoria_id.is_(None))
+
+    busca = request.args.get("busca", "").strip()
+    if busca:
+        # '!' escapa % e _ pra busca ser por texto literal, não por padrão LIKE
+        literal = busca.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+        query = query.filter(Transacao.descricao.ilike(f"%{literal}%", escape="!"))
 
     data_inicio, erro = _data_do_filtro("data_inicio")
     if erro:

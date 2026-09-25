@@ -168,6 +168,10 @@ tr.is-future td:not(:last-child) { color: var(--ink-2); }
 .filters { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 24px; border-bottom: 1px solid var(--line); }
 .filters .field { min-width: 160px; }
 .filters .grow { flex: 1; min-width: 200px; }
+.filters .field-action { align-self: flex-end; min-width: 0; }
+
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--mute); }
+.pager-btns { display: flex; align-items: center; gap: 12px; }
 
 /* ---------- botões e campos ---------- */
 .btn {
@@ -271,7 +275,7 @@ dialog[open] { animation: rise .22s var(--ease); }
   .alert-side { grid-auto-flow: column; justify-content: start; align-items: center; }
   th:first-child, td:first-child { padding-left: 16px; }
   th:last-child, td:last-child { padding-right: 16px; }
-  .filters, .cat-form { padding-inline: 16px; }
+  .filters, .cat-form, .pager { padding-inline: 16px; }
   .cat-form { flex-wrap: wrap; }
   .cat-form .btn { margin-top: 0; }
   .row-2 { grid-template-columns: minmax(0, 1fr); }
