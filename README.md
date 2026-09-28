@@ -87,12 +87,31 @@ A API sobe em `http://127.0.0.1:5000`.
 ```bash
 pytest
 ```
-35 testes automatizados cobrindo saldo, transações, categorias, contas e o
-fluxo do agente de ponta a ponta.
+61 testes automatizados cobrindo saldo, transações, categorias, contas, dashboard,
+telas e o fluxo do agente de ponta a ponta. Rodam em SQLite em memória, sem
+depender do Postgres.
 
 ## Banco de dados
 PostgreSQL hospedado no Render. Migrations gerenciadas via Flask-Migrate
 (Alembic). Seed inicial disponível em `seed.py`.
+
+### Decisões de modelagem (CP2)
+- Quatro tabelas, uma por entidade, todos os relacionamentos 1 para N.
+- Dinheiro em `Numeric(12, 2)`. `valor` é sempre positivo e o sinal vem de `tipo`,
+  as duas regras garantidas por `CHECK` no banco.
+- `conta.saldo_atual` é a única informação duplicada, de propósito: o saldo é lido
+  muito mais vezes do que é escrito. Toda escrita recalcula do zero e o endpoint de
+  saldo recalcula na leitura.
+- `transacao.categoria_id` aceita `NULL`, e é esse `NULL` que aciona a categorização
+  por IA. Apagar uma categoria devolve as transações para `NULL`; apagar uma conta
+  apaga o histórico dela.
+- Índice composto `(conta_id, data)` em `transacao` e `alerta`, mais índice em
+  `transacao.categoria_id`, conferidos com `EXPLAIN` em Postgres.
+
+Justificativas, alternativas descartadas, limitações conhecidas e o diagrama do
+modelo em [docs/decisoes-de-modelagem.md](docs/decisoes-de-modelagem.md). Análise
+completa em [docs/revisao-schema.md](docs/revisao-schema.md) e
+[docs/decisao-saldo-atual.md](docs/decisao-saldo-atual.md).
 
 ## Principais endpoints
 
@@ -104,10 +123,19 @@ PostgreSQL hospedado no Render. Migrations gerenciadas via Flask-Migrate
 | PUT | `/transacoes/:id` | Atualiza transação |
 | DELETE | `/transacoes/:id` | Remove transação |
 | GET | `/categorias` | Lista categorias |
+| POST | `/categorias` | Cria categoria (409 se o nome já existe) |
+| PUT | `/categorias/:id` | Renomeia categoria |
+| GET | `/contas` | Lista contas com saldo atual e projetado |
+| POST | `/contas` | Cria conta |
+| PUT | `/contas/:id` | Renomeia conta |
 | GET | `/contas/:id/saldo` | Saldo atual e projetado da conta |
 | GET | `/alertas` | Lista alertas gerados pelo agente |
 | GET | `/dashboard/resumo?conta_id=1` | Dados do painel: saldos, totais do mês, saídas por categoria, evolução do saldo e data em que o caixa fica negativo |
 | GET | `/health` | Health-check da aplicação e do banco |
+
+## Telas
+A aplicação web é servida pelo próprio Flask e consome a API com `fetch`:
+`/app` (painel), `/app/transacoes`, `/app/alertas`, `/app/categorias` e `/app/contas`.
 
 ## Documentação da API
 Swagger disponível em `/apidocs` após subir a aplicação.
