@@ -162,6 +162,7 @@ tr.is-future td:not(:last-child) { color: var(--ink-2); }
 
 .empty { padding: 48px 24px; text-align: center; color: var(--mute); }
 .empty strong { display: block; margin-bottom: 4px; color: var(--ink); font-weight: 500; }
+.empty .btn { margin-top: 14px; }
 .skeleton { height: 14px; border-radius: 4px; background: linear-gradient(90deg, var(--sunken), var(--line), var(--sunken)); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
@@ -211,6 +212,7 @@ tr.is-future td:not(:last-child) { color: var(--ink-2); }
 .segmented input:focus-visible + label { outline: 2px solid var(--brand); outline-offset: 1px; }
 
 .form-error { padding: 10px 12px; border-radius: 8px; background: var(--neg-soft); color: var(--neg); font-size: 13.5px; }
+.inline-alert { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 14px 24px 0; }
 
 /* ---------- diálogo ---------- */
 dialog {
@@ -277,6 +279,7 @@ dialog[open] { animation: rise .22s var(--ease); }
   th:first-child, td:first-child { padding-left: 16px; }
   th:last-child, td:last-child { padding-right: 16px; }
   .filters, .cat-form, .pager { padding-inline: 16px; }
+  .inline-alert { margin-inline: 16px; }
   .cat-form { flex-wrap: wrap; }
   .cat-form .btn { margin-top: 0; }
   .row-2 { grid-template-columns: minmax(0, 1fr); }

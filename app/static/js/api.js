@@ -31,16 +31,32 @@ const API = (() => {
       await new Promise(r => setTimeout(r, 220));
       return Mock.handle(method, path, body);
     }
+    // O Render free demora para acordar; sem limite, a tela ficaria carregando pra sempre.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 30000);
     try {
       const res = await fetch(path, {
         method,
         headers: body ? { "Content-Type": "application/json" } : undefined,
         body: body ? JSON.stringify(body) : undefined,
+        signal: ctrl.signal,
       });
-      const json = await res.json().catch(() => ({ sucesso: false, erro: "Resposta inválida do servidor" }));
-      return { status: res.status, ...json };
-    } catch {
-      return { status: 0, sucesso: false, erro: "Não foi possível falar com o servidor. Confira se a API está rodando." };
+      const json = await res.json().catch(() => null);
+      // 5xx: o texto do servidor é técnico demais para a tela
+      if (res.status >= 500) {
+        return { status: res.status, sucesso: false, erro: "O servidor teve um problema ao processar o pedido. Tente de novo em instantes." };
+      }
+      return { status: res.status, ...(json ?? { sucesso: false, erro: "Resposta inválida do servidor" }) };
+    } catch (e) {
+      if (e.name === "AbortError") {
+        return { status: 0, sucesso: false, erro: "O servidor demorou demais para responder. Tente de novo em instantes." };
+      }
+      const erro = navigator.onLine
+        ? "Não foi possível falar com o servidor. Confira se a API está rodando."
+        : "Você está sem conexão com a internet.";
+      return { status: 0, sucesso: false, erro };
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -319,6 +335,8 @@ const UI = {
     const el = document.createElement("div");
     el.className = `toast toast-${tipo}`;
     el.textContent = texto;
+    // o contêiner é aria-live "polite"; erro precisa interromper
+    if (tipo === "erro") el.setAttribute("role", "alert");
     if (acao) {
       const a = document.createElement("a");
       a.href = acao.href;
@@ -326,8 +344,19 @@ const UI = {
       el.append(" ", a);
     }
     document.getElementById("toasts").append(el);
-    setTimeout(() => el.remove(), 6000);
+    setTimeout(() => el.remove(), tipo === "erro" ? 10000 : 6000);
   },
+  // 4xx é sobre o que a pessoa digitou e vai no campo. Rede, timeout e 5xx são do
+  // servidor: vai num aviso e o texto digitado continua onde está.
+  falha(r, noCampo) {
+    if (r.status >= 400 && r.status < 500) return noCampo(r.erro);
+    this.toast(r.erro, "erro");
+  },
+  esqueleto: (colunas, linhas = 4) => Array.from({ length: linhas }, () =>
+    `<tr><td colspan="${colunas}"><span class="skeleton"></span></td></tr>`).join(""),
+  falhaDeCarga: (colunas, titulo, r) =>
+    `<tr><td colspan="${colunas}"><div class="empty" role="alert"><strong>${UI.esc(titulo)}</strong>${UI.esc(r.erro)}` +
+    `<div><button type="button" class="btn" data-tentar>Tentar de novo</button></div></div></td></tr>`,
   esc: s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])),
   nivel: n => ({ alto: "Alto", medio: "Médio", baixo: "Baixo" }[n] ?? "Sem nível"),
 };

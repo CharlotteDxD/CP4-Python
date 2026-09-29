@@ -14,8 +14,8 @@
     <form class="cat-form" id="form-conta" novalidate>
       <div class="field" id="campo-nome">
         <label for="c-nome">Nova conta</label>
-        <input class="input" id="c-nome" name="nome" autocomplete="off" placeholder="Ex.: Caixa da loja">
-        <p class="field-error" hidden></p>
+        <input class="input" id="c-nome" name="nome" autocomplete="off" maxlength="120" aria-describedby="c-nome-erro" placeholder="Ex.: Caixa da loja">
+        <p class="field-error" id="c-nome-erro" role="alert" hidden></p>
       </div>
       <button type="submit" class="btn btn-primary" id="btn-criar">Criar conta</button>
     </form>
@@ -33,10 +33,10 @@
 <dialog id="dlg-renomear" aria-labelledby="dlg-renomear-titulo">
   <form class="dialog-form" id="form-renomear" novalidate>
     <h2 class="dialog-title" id="dlg-renomear-titulo">Renomear conta</h2>
-    <p class="form-error" id="ren-erro" hidden></p>
+    <p class="form-error" id="ren-erro" role="alert" hidden></p>
     <div class="field">
       <label for="r-nome">Nome</label>
-      <input class="input" id="r-nome" name="nome" autocomplete="off">
+      <input class="input" id="r-nome" name="nome" autocomplete="off" maxlength="120">
     </div>
     <div class="dialog-actions">
       <button type="button" class="btn" data-fechar>Cancelar</button>

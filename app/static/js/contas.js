@@ -8,9 +8,12 @@
   let renomeando = null;
 
   async function carregar() {
+    // esqueleto só quando não há nada na tela; numa atualização a lista antiga fica até a nova chegar
+    if (!contas.length) $("lista").innerHTML = UI.esqueleto(4);
     const r = await API.get("/contas");
     if (!r.sucesso) {
-      $("lista").innerHTML = `<tr><td colspan="4" class="muted">Não foi possível carregar as contas. ${UI.esc(r.erro)}</td></tr>`;
+      if (contas.length) return UI.toast(`Não foi possível atualizar a lista. ${r.erro}`, "erro");
+      $("lista").innerHTML = UI.falhaDeCarga(4, "Não foi possível carregar as contas.", r);
       return;
     }
     contas = r.dados;
@@ -28,13 +31,32 @@
     campo.classList.add("has-error");
     erro.textContent = texto;
     erro.hidden = false;
+    $("c-nome").setAttribute("aria-invalid", "true");
     $("c-nome").focus();
   }
 
-  $("form-conta").addEventListener("submit", async e => {
-    e.preventDefault();
+  function limparErro() {
     campo.classList.remove("has-error");
     erro.hidden = true;
+    $("c-nome").removeAttribute("aria-invalid");
+  }
+
+  function erroNoDialogo(texto) {
+    $("ren-erro").textContent = texto;
+    $("ren-erro").hidden = false;
+    $("r-nome").setAttribute("aria-invalid", "true");
+    $("r-nome").focus();
+  }
+
+  $("c-nome").addEventListener("input", limparErro);
+  $("r-nome").addEventListener("input", () => {
+    $("ren-erro").hidden = true;
+    $("r-nome").removeAttribute("aria-invalid");
+  });
+
+  $("form-conta").addEventListener("submit", async e => {
+    e.preventDefault();
+    limparErro();
 
     const nome = $("c-nome").value.trim();
     if (!nome) return mostrarErro("Dê um nome para a conta.");
@@ -42,7 +64,7 @@
     $("btn-criar").disabled = true;
     const r = await API.post("/contas", { nome });
     $("btn-criar").disabled = false;
-    if (!r.sucesso) return mostrarErro(r.erro);
+    if (!r.sucesso) return UI.falha(r, mostrarErro);
 
     $("c-nome").value = "";
     UI.toast(`Conta ${r.dados.nome} criada.`);
@@ -50,10 +72,12 @@
   });
 
   $("lista").addEventListener("click", e => {
+    if (e.target.closest("[data-tentar]")) return carregar();
     const b = e.target.closest("[data-renomear]");
     if (!b) return;
     renomeando = contas.find(c => c.id === Number(b.dataset.renomear));
     $("ren-erro").hidden = true;
+    $("r-nome").removeAttribute("aria-invalid");
     $("r-nome").value = renomeando.nome;
     dlg.showModal();
     $("r-nome").select();
@@ -62,19 +86,20 @@
   $("form-renomear").addEventListener("submit", async e => {
     e.preventDefault();
     const nome = $("r-nome").value.trim();
-    if (!nome) {
-      $("ren-erro").textContent = "Dê um nome para a conta.";
-      $("ren-erro").hidden = false;
-      return;
-    }
+    if (!nome) return erroNoDialogo("Dê um nome para a conta.");
 
     $("btn-renomear").disabled = true;
     const r = await API.put(`/contas/${renomeando.id}`, { nome });
     $("btn-renomear").disabled = false;
     if (!r.sucesso) {
-      $("ren-erro").textContent = r.erro;
-      $("ren-erro").hidden = false;
-      return;
+      // outra aba ou outra pessoa já apagou: não há o que renomear, então fecha e atualiza
+      if (r.status === 404) {
+        dlg.close();
+        UI.toast(r.erro, "erro");
+        return carregar();
+      }
+      // toast ficaria atrás do diálogo modal, por isso o erro fica dentro dele
+      return erroNoDialogo(r.erro);
     }
 
     dlg.close();
