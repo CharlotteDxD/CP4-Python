@@ -66,3 +66,54 @@ def criar_categoria():
     db.session.commit()
 
     return success_response(data=categoria.to_dict(), status_code=201)
+
+
+@categorias_bp.route("/<int:categoria_id>", methods=["PUT"])
+def atualizar_categoria(categoria_id):
+    """
+    Renomeia uma categoria
+    ---
+    tags:
+      - Categorias
+    parameters:
+      - in: path
+        name: categoria_id
+        type: integer
+        required: true
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [nome]
+          properties:
+            nome:
+              type: string
+              example: "Manutenção"
+    responses:
+      200:
+        description: Categoria atualizada
+      400:
+        description: Campo 'nome' ausente ou maior que 80 caracteres
+      404:
+        description: Categoria não encontrada
+      409:
+        description: Já existe outra categoria com esse nome
+    """
+    categoria = db.session.get(Categoria, categoria_id)
+    if not categoria:
+        return error_response("Categoria não encontrada", status_code=404)
+
+    body = request.get_json(silent=True) or {}
+    nome = str(body.get("nome") or "").strip()
+    if not nome:
+        return error_response("Campo 'nome' é obrigatório", status_code=400)
+    if len(nome) > 80:
+        return error_response("Campo 'nome' deve ter no máximo 80 caracteres", status_code=400)
+
+    if Categoria.query.filter(Categoria.nome == nome, Categoria.id != categoria_id).first():
+        return error_response("Já existe uma categoria com esse nome", status_code=409)
+
+    categoria.nome = nome
+    db.session.commit()
+    return success_response(data=categoria.to_dict())

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Contas{% endblock %}
+
+{% block content %}
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Contas</h1>
+      <p class="page-sub">Cada conta tem o próprio saldo, calculado a partir das transações registradas nela.</p>
+    </div>
+  </header>
+
+  <section class="block">
+    <form class="cat-form" id="form-conta" novalidate>
+      <div class="field" id="campo-nome">
+        <label for="c-nome">Nova conta</label>
+        <input class="input" id="c-nome" name="nome" autocomplete="off" maxlength="120" aria-describedby="c-nome-erro" placeholder="Ex.: Caixa da loja">
+        <p class="field-error" id="c-nome-erro" role="alert" hidden></p>
+      </div>
+      <button type="submit" class="btn btn-primary" id="btn-criar">Criar conta</button>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Conta</th><th class="num">Saldo atual</th><th class="num">Saldo projetado</th><th><span class="vh">Ações</span></th></tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<dialog id="dlg-renomear" aria-labelledby="dlg-renomear-titulo">
+  <form class="dialog-form" id="form-renomear" novalidate>
+    <h2 class="dialog-title" id="dlg-renomear-titulo">Renomear conta</h2>
+    <p class="form-error" id="ren-erro" role="alert" hidden></p>
+    <div class="field">
+      <label for="r-nome">Nome</label>
+      <input class="input" id="r-nome" name="nome" autocomplete="off" maxlength="120">
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-fechar>Cancelar</button>
+      <button type="submit" class="btn btn-primary" id="btn-renomear">Salvar</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/contas.js') }}"></script>
+{% endblock %}

@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, render_template, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 
 web_bp = Blueprint("web", __name__)
 
@@ -26,3 +26,16 @@ def alertas():
 @web_bp.route("/app/categorias")
 def categorias():
     return render_template("categorias.html")
+
+
+@web_bp.route("/app/contas")
+def contas():
+    return render_template("contas.html")
+
+
+@web_bp.app_errorhandler(404)
+def nao_encontrada(erro):
+    # só as telas ganham página própria; a API segue com o 404 padrão
+    if request.path.startswith("/app"):
+        return render_template("404.html"), 404
+    return erro

@@ -1,7 +1,7 @@
 // Camada de dados do frontend. Com USE_MOCK = true tudo roda em memória, no
 // mesmo formato de resposta da API ({sucesso, dados} / {sucesso, erro}).
-// Para ligar no backend real, troque para false: as páginas não mudam.
-const USE_MOCK = true;
+// Por padrão fala com o backend real; troque para true só pra demonstrar sem banco.
+const USE_MOCK = false;
 
 // Formato do endpoint agregado do painel (implementado em app/blueprints/dashboard):
 // GET /dashboard/resumo?conta_id=1 -> {
@@ -31,16 +31,32 @@ const API = (() => {
       await new Promise(r => setTimeout(r, 220));
       return Mock.handle(method, path, body);
     }
+    // O Render free demora para acordar; sem limite, a tela ficaria carregando pra sempre.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 30000);
     try {
       const res = await fetch(path, {
         method,
         headers: body ? { "Content-Type": "application/json" } : undefined,
         body: body ? JSON.stringify(body) : undefined,
+        signal: ctrl.signal,
       });
-      const json = await res.json().catch(() => ({ sucesso: false, erro: "Resposta inválida do servidor" }));
-      return { status: res.status, ...json };
-    } catch {
-      return { status: 0, sucesso: false, erro: "Não foi possível falar com o servidor. Confira se a API está rodando." };
+      const json = await res.json().catch(() => null);
+      // 5xx: o texto do servidor é técnico demais para a tela
+      if (res.status >= 500) {
+        return { status: res.status, sucesso: false, erro: "O servidor teve um problema ao processar o pedido. Tente de novo em instantes." };
+      }
+      return { status: res.status, ...(json ?? { sucesso: false, erro: "Resposta inválida do servidor" }) };
+    } catch (e) {
+      if (e.name === "AbortError") {
+        return { status: 0, sucesso: false, erro: "O servidor demorou demais para responder. Tente de novo em instantes." };
+      }
+      const erro = navigator.onLine
+        ? "Não foi possível falar com o servidor. Confira se a API está rodando."
+        : "Você está sem conexão com a internet.";
+      return { status: 0, sucesso: false, erro };
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -227,6 +243,32 @@ const Mock = (() => {
     return ok(payload, existente ? 200 : 201);
   }
 
+  // mesmos filtros e mesmo formato de resposta do GET /transacoes do backend
+  function listar(q) {
+    const busca = (q.get("busca") ?? "").trim().toLowerCase();
+    const fim = q.get("data_fim");
+    const lista = transacoes
+      .filter(x => !q.get("tipo") || x.tipo === q.get("tipo"))
+      .filter(x => q.get("categoria_id")
+        ? x.categoria_id === Number(q.get("categoria_id"))
+        : q.get("sem_categoria") !== "true" || x.categoria_id == null)
+      .filter(x => !busca || (x.descricao ?? "").toLowerCase().includes(busca))
+      .filter(x => !q.get("data_inicio") || x.data >= q.get("data_inicio"))
+      .filter(x => !fim || x.data <= (fim.length === 10 ? `${fim}T23:59:59` : fim))
+      .sort((a, b) => b.data.localeCompare(a.data));
+
+    if (!q.has("pagina") && !q.has("por_pagina")) return ok(lista);
+    const porPagina = Math.min(Number(q.get("por_pagina")) || 20, 100);
+    const pagina = Math.max(Number(q.get("pagina")) || 1, 1);
+    return ok({
+      itens: lista.slice((pagina - 1) * porPagina, pagina * porPagina),
+      pagina,
+      por_pagina: porPagina,
+      total: lista.length,
+      total_paginas: Math.ceil(lista.length / porPagina),
+    });
+  }
+
   function handle(method, path, body = {}) {
     const url = new URL(path, location.origin);
     const p = url.pathname.replace(/\/$/, "");
@@ -242,7 +284,17 @@ const Mock = (() => {
       return ok(nova, 201);
     }
 
-    if (method === "GET" && p === "/transacoes") return ok([...transacoes].sort((a, b) => b.data.localeCompare(a.data)));
+    if (method === "PUT" && p.startsWith("/categorias/")) {
+      const alvo = categorias.find(c => c.id === id);
+      if (!alvo) return erro("Categoria não encontrada", 404);
+      const nome = String(body.nome ?? "").trim();
+      if (!nome) return erro("Campo 'nome' é obrigatório");
+      if (categorias.some(c => c.id !== id && c.nome.toLowerCase() === nome.toLowerCase())) return erro("Já existe uma categoria com esse nome", 409);
+      alvo.nome = nome;
+      return ok(alvo);
+    }
+
+    if (method === "GET" && p === "/transacoes") return listar(url.searchParams);
     if (method === "POST" && p === "/transacoes") return salvarTransacao(body);
     if (p.startsWith("/transacoes/")) {
       const alvo = transacoes.find(x => x.id === id);
@@ -256,6 +308,16 @@ const Mock = (() => {
       }
     }
 
+    if (method === "GET" && p === "/contas") {
+      return ok([{ ...conta, saldo_atual: saldoAtual(), saldo_projetado: saldoProjetado() }]);
+    }
+    if (method === "POST" && p === "/contas") return erro("Criar contas só funciona com a API real (USE_MOCK = false).");
+    if (method === "PUT" && p === `/contas/${conta.id}`) {
+      const nome = String(body.nome ?? "").trim();
+      if (!nome) return erro("Campo 'nome' é obrigatório");
+      conta.nome = nome;
+      return ok({ ...conta, saldo_atual: saldoAtual(), saldo_projetado: saldoProjetado() });
+    }
     if (method === "GET" && p === `/contas/${conta.id}/saldo`) {
       return ok({ conta_id: conta.id, nome: conta.nome, saldo_atual: saldoAtual(), saldo_projetado: saldoProjetado() });
     }
@@ -273,6 +335,8 @@ const UI = {
     const el = document.createElement("div");
     el.className = `toast toast-${tipo}`;
     el.textContent = texto;
+    // o contêiner é aria-live "polite"; erro precisa interromper
+    if (tipo === "erro") el.setAttribute("role", "alert");
     if (acao) {
       const a = document.createElement("a");
       a.href = acao.href;
@@ -280,8 +344,19 @@ const UI = {
       el.append(" ", a);
     }
     document.getElementById("toasts").append(el);
-    setTimeout(() => el.remove(), 6000);
+    setTimeout(() => el.remove(), tipo === "erro" ? 10000 : 6000);
   },
+  // 4xx é sobre o que a pessoa digitou e vai no campo. Rede, timeout e 5xx são do
+  // servidor: vai num aviso e o texto digitado continua onde está.
+  falha(r, noCampo) {
+    if (r.status >= 400 && r.status < 500) return noCampo(r.erro);
+    this.toast(r.erro, "erro");
+  },
+  esqueleto: (colunas, linhas = 4) => Array.from({ length: linhas }, () =>
+    `<tr><td colspan="${colunas}"><span class="skeleton"></span></td></tr>`).join(""),
+  falhaDeCarga: (colunas, titulo, r) =>
+    `<tr><td colspan="${colunas}"><div class="empty" role="alert"><strong>${UI.esc(titulo)}</strong>${UI.esc(r.erro)}` +
+    `<div><button type="button" class="btn" data-tentar>Tentar de novo</button></div></div></td></tr>`,
   esc: s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])),
   nivel: n => ({ alto: "Alto", medio: "Médio", baixo: "Baixo" }[n] ?? "Sem nível"),
 };

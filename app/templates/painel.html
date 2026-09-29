@@ -8,7 +8,13 @@
       <h1 class="page-title">Painel</h1>
       <p class="page-sub" id="conta-nome">Carregando conta…</p>
     </div>
-    <a class="btn btn-primary" href="{{ url_for('web.transacoes') }}?nova=1">Registrar transação</a>
+    <div class="head-actions">
+      <div class="field" id="campo-conta" hidden>
+        <label for="f-conta">Conta</label>
+        <select class="input" id="f-conta"></select>
+      </div>
+      <a class="btn btn-primary" href="{{ url_for('web.transacoes') }}?nova=1">Registrar transação</a>
+    </div>
   </header>
 
   <section class="block forecast" aria-labelledby="headline">

@@ -106,6 +106,39 @@ def test_listar_transacoes_filtra_por_intervalo_de_data_incluindo_o_dia_final():
     assert [t["valor"] for t in dados] == [300.0, 200.0]
 
 
+def test_listar_transacoes_filtra_sem_categoria():
+    app = _app_com_banco_limpo()
+    client, categoria_id = _cria_cenario_de_filtros(app)
+
+    dados = client.get("/transacoes?sem_categoria=true").get_json()["dados"]
+    assert len(dados) == 3
+    assert all(t["categoria_id"] is None for t in dados)
+
+    # categoria_id explícito vence sem_categoria
+    dados = client.get(f"/transacoes?sem_categoria=true&categoria_id={categoria_id}").get_json()["dados"]
+    assert [t["categoria_id"] for t in dados] == [categoria_id]
+
+
+def test_listar_transacoes_busca_na_descricao_sem_diferenciar_maiusculas():
+    app = _app_com_banco_limpo()
+    conta_id = _cria_conta(app)
+    client = app.test_client()
+    for descricao in ["Conta de Energia", "Aluguel do ponto", "Desconto 10% fornecedor"]:
+        client.post("/transacoes", json={
+            "valor": 10, "tipo": "saida", "conta_id": conta_id,
+            "descricao": descricao, "categoria_id": None,
+        })
+
+    achou = client.get("/transacoes?busca=energia").get_json()["dados"]
+    assert [t["descricao"] for t in achou] == ["Conta de Energia"]
+
+    # % é texto, não curinga: só a descrição com "10%" bate
+    achou = client.get("/transacoes?busca=10%25").get_json()["dados"]
+    assert [t["descricao"] for t in achou] == ["Desconto 10% fornecedor"]
+    assert client.get("/transacoes?busca=%25").get_json()["dados"] != []
+    assert client.get("/transacoes?busca=inexistente").get_json()["dados"] == []
+
+
 def test_listar_transacoes_paginada_devolve_metadados():
     app = _app_com_banco_limpo()
     client, _ = _cria_cenario_de_filtros(app)
