@@ -1,9 +1,38 @@
+// com uma conta só o seletor nem aparece; a escolha fica salva para a próxima visita
+async function escolherConta() {
+  const r = await API.get("/contas");
+  if (!r.sucesso) return 1;
+  const contas = r.dados;
+  if (contas.length < 2) return contas[0]?.id ?? null;
+
+  let salva = null;
+  try { salva = Number(localStorage.getItem("painel:conta")); } catch { /* sem storage: usa a primeira */ }
+  const id = contas.some(c => c.id === salva) ? salva : contas[0].id;
+
+  const select = document.getElementById("f-conta");
+  select.innerHTML = contas.map(c => `<option value="${c.id}">${UI.esc(c.nome)}</option>`).join("");
+  select.value = id;
+  document.getElementById("campo-conta").hidden = false;
+  select.addEventListener("change", () => {
+    try { localStorage.setItem("painel:conta", select.value); } catch { /* idem */ }
+    location.reload();
+  });
+  return id;
+}
+
 (async () => {
   const { fmt } = API;
+  const contaId = await escolherConta();
+  if (contaId === null) {
+    document.getElementById("conta-nome").textContent = "Nenhuma conta cadastrada";
+    document.getElementById("headline").textContent = "Ainda não há nenhuma conta.";
+    document.getElementById("headline-sub").innerHTML = 'Crie uma em <a href="/app/contas">Contas</a> para ver a projeção do caixa.';
+    return;
+  }
   const [resumo, alertas, transacoes, categorias] = await Promise.all([
-    API.get("/dashboard/resumo?conta_id=1"),
+    API.get(`/dashboard/resumo?conta_id=${contaId}`),
     API.get("/alertas"),
-    API.get("/transacoes"),
+    API.get(`/transacoes?conta_id=${contaId}`),
     API.get("/categorias"),
   ]);
 
@@ -37,7 +66,7 @@
       }).join("")
     : '<li class="muted">Nenhuma saída registrada este mês.</li>';
 
-  const ultimo = alertas.dados?.[0];
+  const ultimo = alertas.dados?.find(a => a.conta_id === contaId);
   document.getElementById("advice").innerHTML = ultimo
     ? `<div class="advice-meta"><span class="chip risk-${ultimo.nivel_risco}">Risco ${UI.nivel(ultimo.nivel_risco).toLowerCase()}</span>${fmt.dataHora(ultimo.data)}</div>
        <p class="advice-text">${UI.esc(ultimo.recomendacao ?? "O agente não conseguiu gerar uma recomendação para este alerta.")}</p>

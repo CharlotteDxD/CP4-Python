@@ -53,6 +53,10 @@
 
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
+<script>
+  // no celular o menu rola de lado; deixa a página atual à vista
+  document.querySelector(".nav [aria-current]")?.scrollIntoView({ inline: "center", block: "nearest" });
+</script>
 <script src="{{ url_for('static', filename='js/api.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>

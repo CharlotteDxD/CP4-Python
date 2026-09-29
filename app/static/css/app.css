@@ -89,6 +89,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
 .page-title { font-size: 26px; font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
 .page-sub { margin-top: 4px; color: var(--mute); font-size: 14px; }
+.head-actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.head-actions .field { min-width: 180px; }
 
 /* ---------- blocos ---------- */
 .block { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
@@ -148,7 +150,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .chip-future { background: var(--brand-soft); color: var(--brand); }
 
 /* ---------- tabela ---------- */
-.table-wrap { overflow-x: auto; }
+/* relative: o .vh do cabeçalho é absoluto e sem isso escapa do overflow e alarga a página no celular */
+.table-wrap { overflow-x: auto; position: relative; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { padding: 11px 16px; text-align: left; vertical-align: middle; }
 thead th { font-size: 12.5px; font-weight: 500; color: var(--mute); border-bottom: 1px solid var(--line); white-space: nowrap; }

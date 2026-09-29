@@ -261,6 +261,10 @@
   $("pg-prox").addEventListener("click", () => { pagina += 1; carregarLista(); });
 
   Promise.all([carregarCategorias(), carregarContas()]).then(carregarLista).then(() => {
-    if (new URLSearchParams(location.search).has("nova")) abrir();
+    if (new URLSearchParams(location.search).has("nova")) {
+      // tira o ?nova da URL, senão atualizar a página reabre o diálogo
+      history.replaceState(null, "", location.pathname);
+      abrir();
+    }
   });
 })();
