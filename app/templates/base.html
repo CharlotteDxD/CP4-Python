@@ -12,18 +12,22 @@
 <body>
 <a class="skip" href="#conteudo">Pular para o conteúdo</a>
 <div class="shell">
-  <aside class="side">
-    <a class="brand" href="{{ url_for('web.painel') }}">
-      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
-        <rect width="32" height="32" rx="8" />
-        <path class="mark-zero" d="M6 19h20" />
-        <path class="mark-line" d="M6 11l6 3 5-2 4 5 5 5" />
-      </svg>
-      <span>
+  <header class="top">
+    <div class="top-row">
+      <a class="brand" href="{{ url_for('web.painel') }}">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="8" />
+          <path class="mark-zero" d="M6 19h20" />
+          <path class="mark-line" d="M6 11l6 3 5-2 4 5 5 5" />
+        </svg>
         <span class="brand-name">Agente Financeiro</span>
-        <span class="brand-sub">Fluxo de caixa</span>
-      </span>
-    </a>
+      </a>
+
+      <div class="top-meta">
+        <span class="proto" id="modo-dados">Protótipo com dados de exemplo</span>
+        <a href="/apidocs">Documentação da API</a>
+      </div>
+    </div>
 
     {% set paginas = [
       ('web.painel', 'Painel'),
@@ -40,12 +44,7 @@
       </a>
       {% endfor %}
     </nav>
-
-    <div class="side-foot">
-      <p class="proto" id="modo-dados">Protótipo com dados de exemplo</p>
-      <a href="/apidocs">Documentação da API</a>
-    </div>
-  </aside>
+  </header>
 
   <main class="main" id="conteudo" tabindex="-1">
     {% block content %}{% endblock %}
