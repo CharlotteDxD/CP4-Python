@@ -1,5 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy import event
+
 from app import create_app
 from app.extensions import db
 from app.models import Alerta, Categoria, Conta, Transacao
@@ -92,3 +94,53 @@ def test_resumo_de_conta_inexistente_retorna_404():
     response = app.test_client().get("/dashboard/resumo?conta_id=999")
 
     assert response.status_code == 404
+
+
+def test_evolucao_junta_lancamentos_do_mesmo_dia_num_ponto_so():
+    app = create_app("testing")
+    agora = _agora()
+    anteontem = (agora - timedelta(days=2)).replace(hour=9, minute=0, second=0, microsecond=0)
+    with app.app_context():
+        db.create_all()
+        conta = Conta(nome="Mesmo dia", saldo_atual=0)
+        db.session.add(conta)
+        db.session.flush()
+        db.session.add_all([
+            Transacao(valor=100, tipo="entrada", conta_id=conta.id, data=anteontem),
+            Transacao(valor=30, tipo="saida", conta_id=conta.id, data=anteontem + timedelta(hours=3)),
+            Transacao(valor=50, tipo="saida", conta_id=conta.id, data=agora + timedelta(days=3)),
+        ])
+        db.session.commit()
+        conta_id = conta.id
+
+    dados = app.test_client().get(f"/dashboard/resumo?conta_id={conta_id}").get_json()["dados"]
+
+    assert [(p["saldo"], p["projetado"]) for p in dados["evolucao_saldo"]] == [(70.0, False), (20.0, True)]
+    assert dados["conta"]["saldo_atual"] == 70.0
+    assert dados["conta"]["saldo_projetado"] == 20.0
+
+
+def test_resumo_faz_o_mesmo_numero_de_consultas_com_muito_ou_pouco_historico():
+    def consultas(qtd):
+        app = create_app("testing")
+        agora = _agora()
+        with app.app_context():
+            db.create_all()
+            conta = Conta(nome="Carga", saldo_atual=0)
+            db.session.add(conta)
+            db.session.flush()
+            db.session.add_all(
+                Transacao(valor=10, tipo="entrada", conta_id=conta.id, data=agora - timedelta(hours=i))
+                for i in range(qtd)
+            )
+            db.session.commit()
+            conta_id = conta.id
+            selects = []
+            event.listen(
+                db.engine, "before_cursor_execute",
+                lambda conn, cur, stmt, *a: selects.append(stmt) if stmt.lstrip().upper().startswith("SELECT") else None,
+            )
+        app.test_client().get(f"/dashboard/resumo?conta_id={conta_id}")
+        return len(selects)
+
+    assert consultas(3) == consultas(300)

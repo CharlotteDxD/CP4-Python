@@ -1,36 +1,47 @@
 from flask import Blueprint, request
-from sqlalchemy import func
+from sqlalchemy import Date, case, func
 
 from app.extensions import db
 from app.models import Alerta, Categoria, Conta, Transacao
-from app.services.saldo import _agora, _delta
+from app.services.saldo import _agora
 from app.utils.responses import error_response, success_response
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
 def _evolucao_diaria(conta_id, agora):
-    """Saldo acumulado ao fim de cada dia com movimento e o saldo atual (mesma regra do saldo.py: data <= agora)."""
-    transacoes = (
-        Transacao.query.filter_by(conta_id=conta_id)
-        .order_by(Transacao.data, Transacao.id)
+    """Saldo acumulado ao fim de cada dia com movimento e o saldo atual (mesma regra do saldo.py: data <= agora).
+
+    O banco agrupa por dia e devolve uma linha por dia com movimento, não uma
+    por transação; só o acumulado corrido é feito aqui.
+    """
+    delta = case(
+        (Transacao.tipo == "entrada", Transacao.valor),
+        (Transacao.tipo == "saida", -Transacao.valor),
+        else_=0,
+    )
+    dia = func.date(Transacao.data, type_=Date)
+    linhas = (
+        db.session.query(
+            dia,
+            func.sum(delta),
+            func.sum(case((Transacao.data <= agora, delta), else_=0)),
+        )
+        .filter(Transacao.conta_id == conta_id)
+        .group_by(dia)
+        .order_by(dia)
         .all()
     )
-    por_dia = {}
-    saldo = 0.0
-    saldo_atual = 0.0
-    for t in transacoes:
-        saldo = round(saldo + _delta(t), 2)
-        por_dia[t.data.date()] = saldo
-        if t.data <= agora:
-            saldo_atual = saldo
 
     hoje = agora.date()
-    evolucao = [
-        {"data": dia.isoformat(), "saldo": valor, "projetado": dia > hoje}
-        for dia, valor in por_dia.items()
-    ]
-    return evolucao, saldo_atual
+    evolucao = []
+    saldo = 0.0
+    saldo_atual = 0.0
+    for data_dia, movimento, ja_vencido in linhas:
+        saldo = round(saldo + float(movimento), 2)
+        saldo_atual += float(ja_vencido)
+        evolucao.append({"data": data_dia.isoformat(), "saldo": saldo, "projetado": data_dia > hoje})
+    return evolucao, round(saldo_atual, 2)
 
 
 def _data_saldo_negativo(evolucao, saldo_atual, agora):
