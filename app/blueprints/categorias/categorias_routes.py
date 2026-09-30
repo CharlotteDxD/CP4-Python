@@ -7,6 +7,18 @@ from app.utils.responses import error_response, success_response
 categorias_bp = Blueprint("categorias", __name__)
 
 
+def _nome_ja_existe(nome, ignorar_id=None):
+    # o unique do banco diferencia "Vendas" de "vendas"; para o agente e para
+    # quem usa a tela isso é duplicata. A tabela é pequena, então compara em Python
+    # (o lower() do SQLite não trata acentos).
+    alvo = nome.casefold()
+    return any(
+        c.nome.casefold() == alvo
+        for c in Categoria.query.all()
+        if c.id != ignorar_id
+    )
+
+
 @categorias_bp.route("", methods=["GET"])
 def listar_categorias():
     """
@@ -58,7 +70,7 @@ def criar_categoria():
 
     # nome é unique no banco (ver models/categoria.py) — checar antes evita
     # depender só da exceção do banco e devolve um 409 claro em vez de 500.
-    if Categoria.query.filter_by(nome=nome).first():
+    if _nome_ja_existe(nome):
         return error_response("Já existe uma categoria com esse nome", status_code=409)
 
     categoria = Categoria(nome=nome)
@@ -111,7 +123,7 @@ def atualizar_categoria(categoria_id):
     if len(nome) > 80:
         return error_response("Campo 'nome' deve ter no máximo 80 caracteres", status_code=400)
 
-    if Categoria.query.filter(Categoria.nome == nome, Categoria.id != categoria_id).first():
+    if _nome_ja_existe(nome, ignorar_id=categoria_id):
         return error_response("Já existe uma categoria com esse nome", status_code=409)
 
     categoria.nome = nome
