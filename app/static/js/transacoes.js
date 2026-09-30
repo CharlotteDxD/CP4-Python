@@ -111,10 +111,10 @@
     $("lista").innerHTML = transacoes.map(t => {
       const futura = new Date(t.data) > hoje;
       return `<tr class="${futura ? "is-future" : ""}">
-        <td>${fmt.dataCurta(t.data)}</td>
+        <td data-label="Data">${fmt.dataCurta(t.data)}</td>
         <td class="desc">${UI.esc(t.descricao ?? "Sem descrição")} ${futura ? '<span class="chip chip-plain chip-future">Agendada</span>' : ""}</td>
-        <td class="col-hide-sm">${nomeCat(t.categoria_id) ? UI.esc(nomeCat(t.categoria_id)) : '<span class="muted">Sem categoria</span>'}</td>
-        <td class="num ${t.tipo === "entrada" ? "val-pos" : "val-neg"}">${t.tipo === "entrada" ? "+" : "-"} ${fmt.moeda(t.valor)}</td>
+        <td class="col-hide-sm" data-label="Categoria">${nomeCat(t.categoria_id) ? UI.esc(nomeCat(t.categoria_id)) : '<span class="muted">Sem categoria</span>'}</td>
+        <td class="num ${t.tipo === "entrada" ? "val-pos" : "val-neg"}" data-label="Valor">${t.tipo === "entrada" ? "+" : "-"} ${fmt.moeda(t.valor)}</td>
         <td><div class="row-actions">
           <button type="button" class="btn btn-ghost" data-editar="${t.id}">Editar</button>
           <button type="button" class="btn btn-ghost" data-excluir="${t.id}">Excluir</button>

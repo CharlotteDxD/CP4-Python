@@ -29,7 +29,7 @@
           const total = doCat.reduce((s, t) => s + t.valor, 0);
           const qtd = rt.sucesso ? doCat.length : "-";
           const soma = rt.sucesso ? API.fmt.moeda(total) : "-";
-          return `<tr><td>${UI.esc(c.nome)}</td><td class="num">${qtd}</td><td class="num">${soma}</td>
+          return `<tr><td class="cell-main">${UI.esc(c.nome)}</td><td class="num" data-label="Transações">${qtd}</td><td class="num" data-label="Total movimentado">${soma}</td>
             <td><div class="row-actions"><button type="button" class="btn btn-ghost" data-renomear="${c.id}">Renomear</button></div></td></tr>`;
         }).join("")
       : '<tr><td colspan="4" class="muted">Nenhuma categoria ainda. Crie a primeira para o agente conseguir categorizar.</td></tr>';

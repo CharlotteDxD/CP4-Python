@@ -19,9 +19,9 @@
     contas = r.dados;
     $("lista").innerHTML = contas.length
       ? contas.map(c => `<tr>
-          <td>${UI.esc(c.nome)}</td>
-          <td class="num">${API.fmt.moeda(c.saldo_atual)}</td>
-          <td class="num ${c.saldo_projetado < 0 ? "val-alert" : ""}">${API.fmt.moeda(c.saldo_projetado)}</td>
+          <td class="cell-main">${UI.esc(c.nome)}</td>
+          <td class="num" data-label="Saldo atual">${API.fmt.moeda(c.saldo_atual)}</td>
+          <td class="num ${c.saldo_projetado < 0 ? "val-alert" : ""}" data-label="Saldo projetado">${API.fmt.moeda(c.saldo_projetado)}</td>
           <td><div class="row-actions"><button type="button" class="btn btn-ghost" data-renomear="${c.id}">Renomear</button></div></td>
         </tr>`).join("")
       : '<tr><td colspan="4" class="muted">Nenhuma conta ainda. Crie a primeira para registrar transações.</td></tr>';
