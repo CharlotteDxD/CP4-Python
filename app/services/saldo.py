@@ -9,8 +9,10 @@ Assim o recálculo e a projeção não se sobrepõem.
 
 from datetime import UTC, datetime
 
+from sqlalchemy import case, func
+
 from app.extensions import db
-from app.models import Conta
+from app.models import Conta, Transacao
 
 
 def _agora():
@@ -31,13 +33,12 @@ def recalcular_saldo(conta_id):
     if conta is None:
         return None
 
-    agora = _agora()
-    total = 0.0
-    for t in conta.transacoes:
-        if t.data is None or t.data <= agora:
-            total += _delta(t)
-
-    conta.saldo_atual = total
+    sinal = case((Transacao.tipo == "entrada", Transacao.valor), else_=-Transacao.valor)
+    conta.saldo_atual = db.session.scalar(
+        db.select(func.coalesce(func.sum(sinal), 0)).where(
+            Transacao.conta_id == conta_id, Transacao.data <= _agora()
+        )
+    )
     db.session.commit()
     return conta
 

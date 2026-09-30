@@ -38,8 +38,19 @@ def create_app(config_name: Optional[str] = None) -> Flask:
 
     _register_extensions(app)
     _register_blueprints(app)
+    _register_error_handlers(app)
 
     return app
+
+
+def _register_error_handlers(app: Flask) -> None:
+    from .extensions import db
+    from .utils.responses import error_response
+
+    @app.errorhandler(500)
+    def erro_interno(e):
+        db.session.rollback()
+        return error_response("Erro interno do servidor", status_code=500)
 
 def _register_extensions(app: Flask) -> None:
     db.init_app(app)
