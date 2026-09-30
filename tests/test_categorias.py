@@ -60,6 +60,37 @@ def test_criar_categoria_duplicada_retorna_409():
     assert response.status_code == 409
 
 
+def test_criar_categoria_com_maiuscula_diferente_retorna_409():
+    app = _app_com_banco_limpo()
+    client = app.test_client()
+
+    client.post("/categorias", json={"nome": "Manutenção"})
+    response = client.post("/categorias", json={"nome": "manutenção"})
+
+    assert response.status_code == 409
+
+
+def test_renomear_para_nome_existente_com_outra_caixa_retorna_409():
+    app = _app_com_banco_limpo()
+    client = app.test_client()
+
+    client.post("/categorias", json={"nome": "Vendas"})
+    outra = client.post("/categorias", json={"nome": "Aluguel"}).get_json()["dados"]["id"]
+    response = client.put(f"/categorias/{outra}", json={"nome": "VENDAS"})
+
+    assert response.status_code == 409
+
+
+def test_renomear_so_a_caixa_do_proprio_nome_e_permitido():
+    app = _app_com_banco_limpo()
+    client = app.test_client()
+
+    cat_id = client.post("/categorias", json={"nome": "vendas"}).get_json()["dados"]["id"]
+    response = client.put(f"/categorias/{cat_id}", json={"nome": "Vendas"})
+
+    assert response.status_code == 200
+
+
 def test_listar_categorias_retorna_ordenado_por_nome():
     app = _app_com_banco_limpo()
     with app.app_context():
